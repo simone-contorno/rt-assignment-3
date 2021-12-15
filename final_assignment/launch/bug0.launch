@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!--<include file="$(find robot_description)/launch/sim_w1.launch"></include>-->
+
+
+    <arg name="des_x" default= "-3"/>
+    <arg name="des_y" default= "-3"/>
+    <param name="des_pos_x" value="$(arg des_x)" />
+    <param name="des_pos_y" value="$(arg des_y)" />
+    <node pkg="final_assignment" type="wall_follow_service_m.py" name="wall_follower" />
+    <node pkg="final_assignment" type="go_to_point_service_m.py" name="go_to_point" />
+    <node pkg="robot_description" type="user_interface.py" name="user_interface" output="screen" />
+    <node pkg="final_assignment" type="bug_m.py" name="bug" />
+</launch>
