@@ -36,7 +36,7 @@ You can use the user interface to:
 The map is this one:<br>
 <br>Rviz:<br>
 <img src="https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_rviz.png" width="275" height="377">
-<br>Gazebo:<br>
+<br><br>Gazebo:<br>
 <img src="https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_gazebo.png" width="500" height="259">
 
 <a name="how"></a>
@@ -49,10 +49,11 @@ Look the pseudocode files into the corresponding directories for more details.<b
 <a name="installation"></a>
 ### Installation and Execution
 
-Open the terminal, go into your ROS workspace and type:
+Open the terminal, and download this repository:
 
 <pre><code>git clone https://github.com/simone-contorno/RT-Assignment-3</code></pre>
 
+Copy or move the folder final_assignment into your ROS workspace.<br> 
 Go into the root folder of your ROS workspace and type: 
 
 <pre><code>catkin_make</code></pre>
