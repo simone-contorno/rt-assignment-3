@@ -35,7 +35,7 @@ You can use the user interface to:
 
 The map is this one:<br>
 <br>Rviz:<br>
-![map_rviz](https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_rviz.png = 50x50)
+<img src="https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_rviz.png" width="50%" height="50%"
 <br>Gazebo:<br>
 ![map_gazebo](https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_gazebo.png)
 
