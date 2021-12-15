@@ -37,7 +37,7 @@ The map is this one:<br>
 <br>Rviz:<br>
 <img src="https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_rviz.png" width="275" height="377">
 <br>Gazebo:<br>
-![map_gazebo](https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_gazebo.png)
+<img src="https://github.com/simone-contorno/RT-Assignment-3/blob/main/third_assignment_map_gazebo.png" width="500" height="259">
 
 <a name="how"></a>
 ### How it works
