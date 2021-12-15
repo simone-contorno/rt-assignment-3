@@ -8,16 +8,13 @@ project(final_assignment)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
-  actionlib_msgs
-  actionlib
-  nav_msgs
   roscpp
   rospy
   sensor_msgs
+  geometry_msgs
+  actionlib_msgs
   move_base_msgs
   std_msgs
-  std_srvs
   tf
 )
 

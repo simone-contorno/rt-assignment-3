@@ -1,4 +1,5 @@
 <launch>
-    <node pkg="final_assignment" type="final_robot" name="go_to_point" output="screen" required="true" />
-    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="keyboard" output="screen" />
+    <include file="$(find final_assignment)/launch/simulation_gmapping.launch" />
+    <include file="$(find final_assignment)/launch/move_base.launch" />
+    <node pkg="final_assignment" type="final_robot" name="final_robot" output="screen" required="true" />
 </launch>
