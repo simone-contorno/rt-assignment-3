@@ -1,0 +1,256 @@
+Robotics control in a simulated environment
+Robotics Engineering
+
+File: pseudocode.txt
+Author: Simone Contorno (@simone-contorno)
+ 
+@copyright Copyright (c) 2021
+
+final_robot.cpp pseudocode
+
+--------------------------------------------
+
+INITIALIZE lin_vel TO 0.0
+INITIALIZE ang_vel TO 0.0
+
+INITIALIZE drive_flag TO 0
+INITIALIZE time_flag TO 0
+
+INITIALIZE flag TO 0
+INITIALIZE print_flag TO 0
+INITIALIZE counter1 TO 10
+
+DEFINE DIST TO 0.35
+DEFINE POS_ERROR TO 0.5
+
+FUNCTION manualDriving
+    INITIALIZE counter2 TO 10;
+    INITIALIZE key TO 'e'
+
+    PRINT  "--- Manual Control ---
+            Linear velocity advised: 0.5
+            Angular velocity advised: 1.0"
+    
+    WHILE key IS NOT EQUALS TO 'q'
+        IF counter2 % 10 IS EQUALS TO 0 THEN
+            PRINT  "Commands:
+                    w - Go on
+                    a - Turn left
+                    s - Go back
+                    d - Turn right
+                    --------------
+                    z - Increase linear velocity
+                    x - Decrease linear velocity
+                    c - Increase angular velocity
+                    v - Decrease angular velocity
+                    -----------------------------
+                    e - Emergency stop
+                    q - Quit"
+        ENDIF
+
+        IF flag IS EQUALS TO 0 THEN
+            PRINT "h - Enable driving assistance"
+        ELSEIF flag IS EQUALS TO 1 THEN
+            PRINT "h - Disable driving assistance"
+        ENDIF
+
+        PRINT "Command: "
+        INPUT key
+
+        SET print_flag TO 0
+
+        IF key IS EQUALS TO 'w' THEN
+            SET robot_vel.linear.x TO lin_vel
+            SET robot_vel.angular.z TO 0
+        ELSEIF key IS EQUALS TO 'a' THEN
+            SET robot_vel.linear.x TO lin_vel
+            SET robot_vel.angular.z TO ang_vel
+        ELSEIF key IS EQUALS TO 's' THEN
+            SET robot_vel.linear.x TO -lin_vel
+            SET robot_vel.angular.z TO 0
+        ELSEIF key IS EQUALS TO 'd' THEN
+            SET robot_vel.linear.x TO lin_vel
+            SET robot_vel.angular.z TO -ang_vel
+        ELSEIF key IS EQUALS TO 'z' THEN
+            SET lin_vel TO lin_vel + 0.1
+        ELSEIF key IS EQUALS TO 'x' THEN
+            SET lin_vel TO lin_vel - 0.1
+        ELSEIF key IS EQUALS TO 'c' THEN
+            SET ang_vel TO ang_vel + 0.1
+        ELSEIF key IS EQUALS TO 'v' THEN
+            SET ang_vel TO ang_vel - 0.1
+        ELSEIF key IS EQUALS TO 'e' THEN
+            SET robot_vel.linear.x TO 0
+            SET robot_vel.angular.z TO 0
+        ELSEIF key IS EQUALS TO 'h' THEN
+            IF flag IS EQUALS TO 0 THEN
+                SET drive_flag TO 0
+                SET flag TO 1
+            ELSEIF flag IS EQUALS TO 1 THEN
+                SET drive_flag TO 0
+                SET flag TO 0
+            ENDIF
+        ELSEIF key IS EQUALS TO 'q' THEN
+            SET robot_vel.linear.x TO 0
+            SET robot_vel.angular.z TO 0
+            PUBLISH robot velocity
+            SET counter1 TO 10
+            BREAK
+        ENDIF
+
+        PRINT   "Linear velocity: " WITH lin_vel
+        PRINT   "Angular velocity: " WITH ang_vel
+    ENDWHILE
+ENDFUNCTION
+
+FUNCTION drivingAssistance WITH (msg)
+    SET left TO 30.0
+    SET mid TO 30.0
+    SET right TO 30.0
+
+    SET right COMPUTING the minimum value on the right 
+    SET mid COMPUTING the minimum value in the middle
+    SET left COMPUTING the minimum value on the left
+    
+    IF drive_flag IS EQUALS TO 1 AND
+        ((mid IS LESS THAN DIST AND key IS EQUALS TO 'w') OR
+        (left IS LESS THAN DIST AND key IS EQUALS TO 'a') OR
+        (right IS LESS THAN DIST AND key IS EQUALS TO 'd')) THEN
+        IF print_flag IS EQUALS TO 0 THEN
+            PRINT "The robot is too close to the wall!"
+            SET print_flag TO 1
+        ENDIF
+        SET robot_vel.linear.x TO 0
+        SET robot_vel.angular.z TO 0
+        PUBLISH robot velocity
+    ENDIF
+
+    IF time_flag IS EQUALS TO 1
+        COMPUTE time with the time elapsed in microseconds
+        IF time IS GREATER THAN 120000000 THEN
+            PRINT "Max time elapsed! The goal point can't be reached!"
+            DELETE current goal
+            SET time_flag TO 0
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION currentStatus WITH (msg)
+    SET current_x TO actual robot x coordinate
+    SET current_y TO actual robot y coordinate
+
+    COMPUTE module of current_x
+    COMPUTE module of current_y
+
+    SET diff_x TO module of the difference between current_x and x_goal
+    SET diff_y TO module of the difference between current_y and y_goal
+
+    IF diff_x IS LESS OR EQUALS TO POS_ERROR AND 
+        diff_y IS LESS OR EQUALS TO POS_ERROR THEN
+        SET time_flag TO 0
+    ENDIF
+
+    IF id IS NOT EQUALS TO the current goal ID THEN 
+        SET time_flag TO 1
+        SET id TO current goal ID
+        SET t_start TO the current time
+    ENDIF
+ENDFUNCTION
+
+FUNCTION currentGoal WITH (msg)
+    SET x_goal TO goal x coordinate
+    SET y_goal TO goal y coordinate
+
+    COMPUTE module of x_goal
+    COMPUTE module of y_goal
+ENDFUNCTION
+
+FUNCTION userInterface 
+    WHILE in IS NOT EQUALS TO '0'
+        IF counter1 % 10 IS EQUALS TO 0 THEN
+            PRINT  "Choose an action:
+                    0 - Exit
+                    1 - Insert new coordinates to reach
+                    2 - Cancel the current goal\n
+                    3 - Manual driving"
+        ENDIF
+        IF flag IS EQUALS TO 0 THEN
+            PRINT "4 - Enable driving assistance"
+        ELSEIF flag IS EQUALS TO 1 THEN
+            PRINT "4 - Disable driving assistance"
+        ENDIF
+
+        PRINT "Action (type the corresponding number): "
+        INPUT in    
+
+        CHECK if the input is valid
+        
+        SET counter1 TO counter1 + 1
+        
+        IF in IS EQUALS TO 0 THEN
+            SET time_flag TO 0
+            CANCEL current goal
+        ELSEIF in IS EQUALS TO 1 THEN
+            PRINT "Insert coordinates to reach:"
+            PRINT "X: "
+            INPUT X
+            PRINT "Y: "
+            INPUT Y
+
+            SET x TO DOUBLE OF X
+            SET y TO DOUBLE OF Y
+
+            SET frame_id TO "map"
+            SET orientation.w TO 1
+            SET position.x TO x
+            SET position.y TO y 
+
+            PUBLISH new goal
+        ELSEIF in IS EQUALS TO 2 THEN
+            CANCEL current goal
+            PRINT "Goal cancelled."
+        ELSEIF in IS EQUALS TO 3 THEN
+            SET time_flag TO 0 
+            CANCEL current goal 
+            CALL manualDriving
+        ELSEIF in IS EQUALS TO 4 THEN 
+            IF flag IS EQUALS TO 1 THEN
+                SET drive_flag TO 0
+                SET flag TO 0
+                PRINT "Driving assistance disabled."
+            ENDIF
+        ENDIF
+    ENDWHILE
+ENDFUNCTION
+
+FUNCTION main WITH (argc, argv)
+    PRINT   "IMPORTANT:
+            If you insert a string of characters, these will be analysed one by one.
+            This can be useful if you want to increment the robot velocity with an unique
+            command (e.g. zzzzz will be increment the velocity by 0.5), but it can be
+            annoying if the command are not valid or if they are not Increment/Decrement commands.
+            
+            Notice that, at runtime, it cannot be possible to enable the driving assistance,
+            but it is possible to disable its.
+            
+            A goal will be cancelled if it will be not reached within 120 seconds."
+    
+    INITIALIZE the node "nh" as "final_robot"
+    
+    SET pub_goal TO "move_base/goal"
+    SET pub_canc TO "move_base/cancel"
+    SET pub_vel TO "cmd_vel"
+
+    SET sub_pos TO "/move_base/feedback" WITH currentStatus
+    SET sub_goal TO "/move_base/goal" WITH currentGoal
+    SET sub_laser TO "/scan" WITH drivingAssistance
+
+    INITIALIZE AsyncSpinner spinner WITH 3 threads
+    CALL spinner.start
+    CALL userInterface
+    CALL spinner.stop
+    CALL ros::shutdown
+    CALL ros::waitForShutdown
+    
+    RETURN 0
+ENDFUNCTION
