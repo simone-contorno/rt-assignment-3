@@ -42,26 +42,27 @@ The map is this one:<br>
 <a name="how"></a>
 ### How it works
 
-The program use the launch file "simulation_gmapping.launch", to run the simulated environment, and the launch file "move_base.launch" to run the action move_base that provides several topics, including:
+The program use the launch file "simulation_gmapping.launch" to run the simulated environment, and the launch file "move_base.launch" to run the action move_base that provides several topics, including:
 <ul>
     <li>move_base/goal to publish the goal position;</li>
     <li>move_base/feedback to receive the feedback;</li> 
     <li>move_base/cancel to cancel the current goal.</li>
 </ul>
-<br>
-There are 2 subscribers that run simultaneously thanks to a multi-thread architecture given by the ROS class AsyncSpinner:
+
+There are 3 subscribers that run simultaneously thanks to a multi-thread architecture given by the ROS class AsyncSpinner:
 <ul>
-    <li>sub_id: subscribe to the topic /move_base/feedback through the function currentGoalID that continuosly update the current goal ID.</li>
-    <li>sub_laser: subscribe to the topic /scan through the function drivingAssistance that continuosly take data by the lasar scanner and, if the driving assistance is enable, help the user to drive the robot, stopping its if there is a wall too close in the current direction.</li>
+    <li>sub_pos: subscribes to the topic /move_base/feedback through the function currentStatus that continuosly update the current goal ID and check whether the robot has reached the goal position.</li>
+    <li>sub_goal: subscribes to the topic /move_base/goal through the function currentGoal that continuosly upadte the current goal coordinates.</li>
+    <li>sub_laser: subscribes to the topic /scan through the function drivingAssistance that continuosly take data by the laser scanner and, if the driving assistance is enable, help the user to drive the robot stopping its if there is a wall too close in the current direction.</li>
 </ul>
-<br>
+
 The robot can:
 <ol>
     <li>Autonomously reaching a goal position: 
         <ul>
             <li>ask to the user to insert the coordinates x and y to reach;</li>
             <li>save the current time;</li>
-            <li>set the fram_id to "map" (corresponding to the environment that is used) and the new coordinates to reach;</li>
+            <li>set the frame_id to "map" (corresponding to the environment that is used) and the new coordinates to reach;</li>
             <li>publish the new goal to move_base/goal.</li>
         </ul>
     </li>
@@ -74,7 +75,7 @@ The robot can:
     <li>Be driven by the user through the keyboard (the list of commands is printed on the console).</li>
 </ol>
 
-Look the pseudocode files for more details.<br>
+Look the pseudocode file for more details.<br>
 
 <a name="installation"></a>
 ### Installation and Execution
