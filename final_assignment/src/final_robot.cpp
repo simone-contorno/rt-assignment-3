@@ -32,11 +32,6 @@ ros::Publisher pub_goal;
 ros::Publisher pub_canc;
 ros::Publisher pub_vel;
 
-// Declare the subscribers
-ros::ServiceClient go_to_point;
-ros::ServiceClient keyboard;
-ros::ServiceClient both;
-
 // Global variables
 float lin_vel = 0.0; // Robot linear velocity 
 float ang_vel = 0.0; // Robot angular velocity
@@ -50,11 +45,15 @@ int print_flag = 0; // Just to manage printing in drivingAssistance
 int counter1 = 10; // Just to manage printing in manualDriving
 int counter2; // Just to manage printing in userInterface
 
-std::string id; // Goal ID
+float x_goal; // Current goal coordinate x
+float y_goal; // Current goal coordinate y
+
+std::string id = ""; // Goal ID
 std::chrono::high_resolution_clock::time_point t_start;  
 std::chrono::high_resolution_clock::time_point t_end; 
 
 #define DIST 0.35 // Minimum distance from the wall with the driving assistance enabled
+#define POS_ERROR 0.5 // Position range error
 
 /**
  * Function: provide an user interface to drive the robot independently.
@@ -88,8 +87,8 @@ void manualDriving() {
             "-----------------------------\n"
             "e - Emergency stop\n"
             "q - Quit\n");
-            
         }
+
         if (flag == 0) 
             printf("h - Enable driving assistance\n");
         else if (flag == 1)
@@ -172,7 +171,6 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
     float mid = 30.0;
     float right = 30.0;
     int i;
-    int block = 0;
     geometry_msgs::Twist robot_vel;
     
     // Take the minimum values
@@ -190,9 +188,9 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
     }
 
     // Driving assistance
-    if (drive_flag == 1 & ((mid < DIST & key == 'w') || (left < DIST & key == 'a') || (right < DIST & key == 'd'))) {
+    if (drive_flag == 1 & ((mid < DIST && key == 'w') || (left < DIST && key == 'a') || (right < DIST && key == 'd'))) {
         if (print_flag == 0) {
-            printf("The robot is too close to the wall!\n");
+            printf("\nThe robot is too close to the wall!\n");
             print_flag = 1;
         }
         robot_vel.linear.x = 0;
@@ -206,7 +204,7 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
         if (time > 120000000) {
             actionlib_msgs::GoalID canc_goal;
-            printf("\nMax time elapsed! The goal point can't be reached!\n");
+            printf("\nThe goal point can't be reached!\n");
             canc_goal.id = id;
             pub_canc.publish(canc_goal);
             printf("Goal cancelled.\n");
@@ -216,36 +214,82 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
 }
 
 /**
+ * ROS Callback Function: check if the robot is on the goal position and,
+ * when there is a new goal, update the current Goal ID and save its in a 
+ * global variable.
+ * 
+ * @param msg 
+ */
+void currentStatus(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& msg) {
+    // Take the current robot position
+    float diff_x;
+    float diff_y;
+    float current_x = msg->feedback.base_position.pose.position.x;
+    float current_y = msg->feedback.base_position.pose.position.y;
+
+    // Take the module
+    if (current_x < 0)
+        current_x *= -1;
+    if (current_y < 0)
+        current_y *= -1;
+    
+    // Compute the error from the actual position and the goal position
+    if (current_x >= x_goal)
+        diff_x = current_x - x_goal;
+    else 
+        diff_x = x_goal - current_x;
+    if (current_y >= y_goal)
+        diff_y = current_y - y_goal;
+    else 
+        diff_y = y_goal - current_y;
+
+    // The robot is on the goal position
+    if (diff_x <= POS_ERROR && diff_y <= POS_ERROR)
+        time_flag = 0;
+
+    // Update the goal ID if there is a new goal
+    if (id != msg->status.goal_id.id) {
+        time_flag = 1;
+        id = msg->status.goal_id.id;
+        t_start = std::chrono::high_resolution_clock::now();
+    }
+}
+
+/**
  * ROS Callback Function: check the current Goal ID and save its in a global
  * variable.
  * 
  * @param msg 
  */
-void currentGoalID(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& msg) {
-    id = msg->status.goal_id.id;
+void currentGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr& msg) {
+    x_goal = msg->goal.target_pose.pose.position.x;
+    y_goal = msg->goal.target_pose.pose.position.y;
+
+    // Take the module
+    if (x_goal < 0)
+        x_goal *= -1;
+    if (y_goal < 0)
+        y_goal *= -1;
 }
 
 /**
- * ROS Callback Function: provide an user interface to choose the modality to 
+ * Function: provide an user interface to choose the modality to 
  * drive the robot; these are:
  * 1. Automatic driving (insert the coordinates to reach)
  * 2. Manual driving (without driving assitance)
  * 3. Manual driving (with driving assistance)
  * 
- * The driving assistance can be simply be enabled or disabled.
- * 
- * @param msg 
+ * The driving assistance can be simply enabled or disabled.
  */
-void userInterface(const sensor_msgs::LaserScan::ConstPtr& msg) {
+void userInterface() {
     // Local variables
     move_base_msgs::MoveBaseActionGoal goal_pos;
     actionlib_msgs::GoalID canc_goal;
-    int x, y;
+    std::string X, Y;
+    double x, y;
     char in;
 
-    // Choose the action
-    do {
-        in = '5'; // Just to avoid a bug
+    while (in != '0') {
         // Print commands list
         if (counter1 % 10 == 0) {
             printf("\nChoose an action:\n"
@@ -264,68 +308,70 @@ void userInterface(const sensor_msgs::LaserScan::ConstPtr& msg) {
         std::cin >> in;
 
         // Check input
-        if (in != '0' & in != '1' & in != '2' & in != '3' & in != '4') 
-            printf("\nERROR: type '0','1', '2', '3' or '4'.\n");
+        if (in != '0' && in != '1' && in != '2' && in != '3' && in != '4') 
+            printf("\nERROR: type '0', '1', '2', '3' or '4'.\n");
 
         counter1++;
-    } while (in != '0' & in != '1' & in != '2' & in != '3' & in != '4');
 
-    // Terminate the program
-    if (in == '0') {
-        printf("\n");
-        exit(0);
-    }
-
-    // Insert new coordinates to reach
-    else if (in == '1') {
-        // Take coordinates to reach by the user
-        printf("\nInsert coordinates to reach:\n");
-        printf("X: ");
-        std::cin >> x;
-        printf("Y: ");
-        std::cin >> y;
-
-        t_start = std::chrono::high_resolution_clock::now();
-        time_flag = 1;
-
-        // Set new coordinates to reach
-        goal_pos.goal.target_pose.header.frame_id = "map";
-        goal_pos.goal.target_pose.pose.orientation.w = 1;
-        
-        goal_pos.goal.target_pose.pose.position.x = x;
-        goal_pos.goal.target_pose.pose.position.y = y;
-
-        // Publish new goal 
-        pub_goal.publish(goal_pos);
-    }
-    
-    // Cancel the current goal
-    else if (in == '2') {
-        // Take the Goal ID from the global variables continuosly
-        // updated by the ROS Callback Function currentGoalID
-        canc_goal.id = id;
-        pub_canc.publish(canc_goal);
-        printf("Goal cancelled.\n");
-    }
-
-    // Manual drive
-    else if (in == '3') {
-        canc_goal.id = id;
-        pub_canc.publish(canc_goal);
-        manualDriving();
-    }
-
-    // Enable or Disable drive assistance
-    else if (in == '4') {
-        if (flag == 0) {
-            drive_flag = 1;
-            flag = 1;
-            printf("\nDriving assistance enabled.\n");
+        // Delete current goal
+        if (in == '0') {
+            time_flag = 0;
+            canc_goal.id = id;
+            pub_canc.publish(canc_goal);
         }
-        else if (flag == 1) {
-            drive_flag = 0;
-            flag = 0;
-            printf("\nDriving assistance disabled.\n");
+
+        // Insert new coordinates to reach
+        else if (in == '1') {
+            // Take coordinates to reach by the user
+            printf("\nInsert coordinates to reach:\n");
+            printf("X: ");
+            std::cin >> X;
+            printf("Y: ");
+            std::cin >> Y;
+
+            x = atof(X.c_str());
+            y = atof(Y.c_str());
+
+            // Set new coordinates to reach
+            goal_pos.goal.target_pose.header.frame_id = "map";
+            goal_pos.goal.target_pose.pose.orientation.w = 1;
+            
+            goal_pos.goal.target_pose.pose.position.x = x;
+            goal_pos.goal.target_pose.pose.position.y = y;
+
+            // Publish new goal 
+            pub_goal.publish(goal_pos);
+        }
+        
+        // Cancel the current goal
+        else if (in == '2') {
+            // Take the Goal ID from the global variables continuosly
+            // updated by the ROS Callback Function currentGoalID
+            canc_goal.id = id;
+            pub_canc.publish(canc_goal);
+            printf("Goal cancelled.\n");
+        }
+
+        // Manual drive
+        else if (in == '3') {
+            time_flag = 0;
+            canc_goal.id = id;
+            pub_canc.publish(canc_goal);
+            manualDriving();
+        }
+
+        // Enable or Disable drive assistance
+        else if (in == '4') {
+            if (flag == 0) {
+                drive_flag = 1;
+                flag = 1;
+                printf("\nDriving assistance enabled.\n");
+            }
+            else if (flag == 1) {
+                drive_flag = 0;
+                flag = 0;
+                printf("\nDriving assistance disabled.\n");
+            }
         }
     }
 }
@@ -336,7 +382,9 @@ int main(int argc, char **argv) {
     "This can be useful if you want to increment the robot velocity with an unique\n"
     "command (e.g. zzzzz will be increment the velocity by 0.5), but it can be\n"
     "annoying if the command are not valid or if they are not Increment/Decrement commands.\n\n"
-    "A goal will be cancelled if its will be not reached within 120 seconds.\n");
+    "Notice that, at runtime, it cannot be possible to enable the driving assistance,\n"
+    "but it is possible to disable its.\n\n"
+    "A goal will be cancelled if it will be not reached within 120 seconds.\n");
 
     // Initialize the node
     ros::init(argc, argv, "final_robot");
@@ -348,13 +396,16 @@ int main(int argc, char **argv) {
     pub_vel = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1000);
     
     // Define the subscribers
-    ros::Subscriber sub = nh.subscribe("/scan", 1000, userInterface);
-    ros::Subscriber sub_id = nh.subscribe("/move_base/feedback", 1000, currentGoalID); // Current Goal feedback
+    ros::Subscriber sub_pos = nh.subscribe("/move_base/feedback", 1000, currentStatus); // Current  Status feedback
+    ros::Subscriber sub_goal = nh.subscribe("/move_base/goal", 1000, currentGoal); // Current Goal feedback
     ros::Subscriber sub_laser = nh.subscribe("/scan", 1000, drivingAssistance); // Laser scanner
 
     // Multi-threading
     ros::AsyncSpinner spinner(3);
     spinner.start();
+    userInterface();
+    spinner.stop();
+    ros::shutdown();
     ros::waitForShutdown();
 
     return 0;
