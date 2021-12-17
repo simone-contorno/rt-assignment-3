@@ -14,17 +14,15 @@
  */
 
 // Headers
-#include <csignal>
 #include <iostream>
 #include <string>
 #include <chrono>
 
 #include "ros/ros.h"
-#include "sensor_msgs/LaserScan.h"
 #include "geometry_msgs/Twist.h"
-#include "move_base_msgs/MoveBaseActionGoal.h"
+#include "sensor_msgs/LaserScan.h"
 #include "actionlib_msgs/GoalID.h"
-#include "actionlib_msgs/GoalStatusArray.h"
+#include "move_base_msgs/MoveBaseActionGoal.h"
 #include "move_base_msgs/MoveBaseActionFeedback.h"
 
 // Declare the publishers
@@ -37,10 +35,10 @@ float lin_vel = 0.0; // Robot linear velocity
 float ang_vel = 0.0; // Robot angular velocity
 char key; // User input from keyboard to drive the robot
 
-int drive_flag = 0; // Enable / Disable driving assistance
+int drive_flag = 0; // Enable/Disable driving assistance
 int time_flag = 0; // Compute the time elapsed since the request of the current goal
 
-int flag = 0; // Just to manage printing of the option Enable / Disable driving assistance
+int flag = 0; // Just to manage printing of the option Enable/Disable driving assistance
 int print_flag = 0; // Just to manage printing in drivingAssistance
 int counter1 = 10; // Just to manage printing in manualDriving
 int counter2; // Just to manage printing in userInterface
@@ -54,9 +52,10 @@ std::chrono::high_resolution_clock::time_point t_end;
 
 #define DIST 0.35 // Minimum distance from the wall with the driving assistance enabled
 #define POS_ERROR 0.5 // Position range error
+#define MAX_TIME 120000000 // Maximum time to reach a goal (microseconds)
 
 /**
- * Function: provide an user interface to drive the robot independently.
+ * Function: provide an user interface to drive the robot autonomously.
  * A driving assistance can be enabled (or clearly disabled).
  * 
  */
@@ -79,7 +78,7 @@ void manualDriving() {
             "a - Turn left\n"
             "s - Go back\n"
             "d - Turn right\n"
-            "--------------\n"
+            "-----------------------------\n"
             "z - Increase linear velocity\n"
             "x - Decrease linear velocity\n"
             "c - Increase angular velocity\n"
@@ -106,7 +105,7 @@ void manualDriving() {
         }
         else if (key == 'a') { // Turn left
             robot_vel.linear.x = lin_vel;
-            robot_vel.angular.z = +ang_vel; 
+            robot_vel.angular.z = ang_vel; 
         }
         else if (key == 's') { // Go back
             robot_vel.linear.x = -lin_vel;
@@ -132,7 +131,7 @@ void manualDriving() {
             robot_vel.linear.x = 0;
             robot_vel.angular.z = 0; 
         }
-        else if (key == 'h') { // Enable / Disable driving assistance
+        else if (key == 'h') { // Enable/Disable driving assistance
             if (flag == 0) {
                 drive_flag = 1;
                 flag = 1;
@@ -167,11 +166,11 @@ void manualDriving() {
  */
 void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
     // Local variables
+    geometry_msgs::Twist robot_vel;
     float left = 30.0;
     float mid = 30.0;
     float right = 30.0;
     int i;
-    geometry_msgs::Twist robot_vel;
     
     // Take the minimum values
     for (i = 0; i < 360; i++) { // On the right
@@ -202,7 +201,7 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
     if (time_flag == 1) {
         t_end = std::chrono::high_resolution_clock::now();
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
-        if (time > 120000000) {
+        if (time > MAX_TIME) {
             actionlib_msgs::GoalID canc_goal;
             printf("\nThe goal point can't be reached!\n");
             canc_goal.id = id;
@@ -256,8 +255,8 @@ void currentStatus(const move_base_msgs::MoveBaseActionFeedback::ConstPtr& msg) 
 }
 
 /**
- * ROS Callback Function: check the current Goal ID and save its in a global
- * variable.
+ * ROS Callback Function: check the current goal position and saves its 
+ * module coordinates x and y in two global variables.
  * 
  * @param msg 
  */
@@ -275,11 +274,12 @@ void currentGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr& msg) {
 /**
  * Function: provide an user interface to choose the modality to 
  * drive the robot; these are:
- * 1. Automatic driving (insert the coordinates to reach)
- * 2. Manual driving (without driving assitance)
- * 3. Manual driving (with driving assistance)
+ * 1. Automatic driving (insert the coordinates to reach);
+ *      1.1 it is also possible cancel the current goal.
+ * 2. Manual driving (without driving assistance).
+ * 3. Manual driving (with driving assistance);
+ *      3.1 the driving assistance can be simply enabled or disabled.
  * 
- * The driving assistance can be simply enabled or disabled.
  */
 void userInterface() {
     // Local variables
@@ -345,8 +345,6 @@ void userInterface() {
         
         // Cancel the current goal
         else if (in == '2') {
-            // Take the Goal ID from the global variables continuosly
-            // updated by the ROS Callback Function currentGoalID
             canc_goal.id = id;
             pub_canc.publish(canc_goal);
             printf("Goal cancelled.\n");
