@@ -52,8 +52,8 @@ The program use the launch file "simulation_gmapping.launch" to run the simulate
 There are 3 subscribers that run simultaneously thanks to a multi-thread architecture given by the ROS class AsyncSpinner:
 <ul>
     <li>sub_pos: subscribes to the topic /move_base/feedback through the function currentStatus that continuosly update the current goal ID and check whether the robot has reached the goal position.</li>
-    <li>sub_goal: subscribes to the topic /move_base/goal through the function currentGoal that continuosly upadte the current goal coordinates.</li>
-    <li>sub_laser: subscribes to the topic /scan through the function drivingAssistance that continuosly take data by the laser scanner and, if the driving assistance is enable, help the user to drive the robot stopping its if there is a wall too close in the current direction.</li>
+    <li>sub_goal: subscribes to the topic /move_base/goal through the function currentGoal that continuosly update the current goal coordinates.</li>
+    <li>sub_laser: subscribes to the topic /scan through the function drivingAssistance that continuosly take data by the laser scanner and, if the driving assistance is enabled, help the user to drive the robot stopping its if there is a wall too close in the current direction.</li>
 </ul>
 
 The robot can:
@@ -82,11 +82,11 @@ You can change 3 constant values to modify some aspect of the program:
         <li>MAX_TIME: maximum time to reach a goal (microseconds).</li>
     </ul>
 In the code these appear like:
-'''cpp
+``` cpp
 #define DIST 0.35 
 #define POS_ERROR 0.5 
 #define MAX_TIME 120000000 
-'''
+```
 
 Look the pseudocode file final_robot_pseudocode for more details.<br>
 
