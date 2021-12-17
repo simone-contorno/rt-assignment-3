@@ -88,7 +88,7 @@ In the code these appear like:
 #define MAX_TIME 120000000 
 ```
 
-A short description of the program behaviour is this one:
+A short description of the program behavior is this one:
 <pre><code>
 FUNCTION manualDriving
     WHILE user does not quit
@@ -157,7 +157,7 @@ FUNCTION main WITH (argc, argv)
 
     RETURN 0
 ENDFUNCTION
-<pre><code>
+</code></pre>
 
 Look the pseudocode file final_robot_pseudocode for more details.<br>
 
