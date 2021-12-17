@@ -1,7 +1,7 @@
 Robotics control in a simulated environment
 Robotics Engineering
 
-File: pseudocode.txt
+File: final_robot_pseudocode.txt
 Author: Simone Contorno (@simone-contorno)
  
 @copyright Copyright (c) 2021
@@ -38,7 +38,7 @@ FUNCTION manualDriving
                     a - Turn left
                     s - Go back
                     d - Turn right
-                    --------------
+                    -----------------------------
                     z - Increase linear velocity
                     x - Decrease linear velocity
                     c - Increase angular velocity
@@ -84,7 +84,7 @@ FUNCTION manualDriving
             SET robot_vel.angular.z TO 0
         ELSEIF key IS EQUALS TO 'h' THEN
             IF flag IS EQUALS TO 0 THEN
-                SET drive_flag TO 0
+                SET drive_flag TO 1
                 SET flag TO 1
             ELSEIF flag IS EQUALS TO 1 THEN
                 SET drive_flag TO 0
@@ -98,8 +98,10 @@ FUNCTION manualDriving
             BREAK
         ENDIF
 
-        PRINT   "Linear velocity: " WITH lin_vel
-        PRINT   "Angular velocity: " WITH ang_vel
+        PRINT   "Linear velocity: "     WITH lin_vel
+        PRINT   "Angular velocity: "    WITH ang_vel
+        PUBLISH robot velocity
+        SET counter2 TO counter2 + 1
     ENDWHILE
 ENDFUNCTION
 
@@ -126,10 +128,12 @@ FUNCTION drivingAssistance WITH (msg)
     ENDIF
 
     IF time_flag IS EQUALS TO 1
-        COMPUTE time with the time elapsed in microseconds
+        SET t_end TO the current time
+        SET time TO t_end - t_start
         IF time IS GREATER THAN 120000000 THEN
             PRINT "Max time elapsed! The goal point can't be reached!"
             DELETE current goal
+            PRINT "Goal cancelled."
             SET time_flag TO 0
         ENDIF
     ENDIF
@@ -214,7 +218,11 @@ FUNCTION userInterface
             CANCEL current goal 
             CALL manualDriving
         ELSEIF in IS EQUALS TO 4 THEN 
-            IF flag IS EQUALS TO 1 THEN
+            IF flag IS EQUALS TO 0 THEN
+                SET drive_flag TO 1
+                SET flag TO 1
+                PRINT "Driving assistance enabled."
+            ELSEIF flag IS EQUALS TO 1 THEN
                 SET drive_flag TO 0
                 SET flag TO 0
                 PRINT "Driving assistance disabled."
@@ -224,7 +232,7 @@ FUNCTION userInterface
 ENDFUNCTION
 
 FUNCTION main WITH (argc, argv)
-    PRINT   "IMPORTANT:
+    PRINT  "IMPORTANT:
             If you insert a string of characters, these will be analysed one by one.
             This can be useful if you want to increment the robot velocity with an unique
             command (e.g. zzzzz will be increment the velocity by 0.5), but it can be
@@ -235,7 +243,7 @@ FUNCTION main WITH (argc, argv)
             
             A goal will be cancelled if it will be not reached within 120 seconds."
     
-    INITIALIZE the node "nh" as "final_robot"
+    INITIALIZE the node nh as "final_robot"
     
     SET pub_goal TO "move_base/goal"
     SET pub_canc TO "move_base/cancel"
@@ -245,7 +253,7 @@ FUNCTION main WITH (argc, argv)
     SET sub_goal TO "/move_base/goal" WITH currentGoal
     SET sub_laser TO "/scan" WITH drivingAssistance
 
-    INITIALIZE AsyncSpinner spinner WITH 3 threads
+    INITIALIZE ros::AsyncSpinner spinner WITH 3 threads
     CALL spinner.start
     CALL userInterface
     CALL spinner.stop

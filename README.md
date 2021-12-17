@@ -75,7 +75,20 @@ The robot can:
     <li>Be driven by the user through the keyboard (the list of commands is printed on the console).</li>
 </ol>
 
-Look the pseudocode file for more details.<br>
+You can change 3 constant values to modify some aspect of the program:
+    <ul>
+        <li>DIST: minimum distance from the wall with the driving assistance enabled.</li>
+        <li>POS_ERROR: position range error.</li>
+        <li>MAX_TIME: maximum time to reach a goal (microseconds).</li>
+    </ul>
+In the code these appear like:
+'''cpp
+#define DIST 0.35 
+#define POS_ERROR 0.5 
+#define MAX_TIME 120000000 
+'''
+
+Look the pseudocode file final_robot_pseudocode for more details.<br>
 
 <a name="installation"></a>
 ### Installation and Execution
@@ -111,4 +124,4 @@ In the third one run the node final_robot:
 The driving assistance can be improved by move the robot in the right direction when the user is driving 
 its against a wall, instead of just stop it.<br><br>
 
-Thanks to have read this file, i hope it was clear and interesting.<br>
+Thanks to have read this file, i hope it was clear and interesting.
