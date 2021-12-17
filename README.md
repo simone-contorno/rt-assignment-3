@@ -88,6 +88,77 @@ In the code these appear like:
 #define MAX_TIME 120000000 
 ```
 
+A short description of the program behaviour is this one:
+<pre><code>
+FUNCTION manualDriving
+    WHILE user does not quit
+        TAKE user input through the keyboard
+        EXEC corresponding task
+        PUBLISH new robot velocity
+    ENDWHILE
+ENDFUNCTION
+
+FUNCTION drivingAssistance WITH (msg)
+    COMPUTE minimum distance on the right
+    COMPUTE minimum distance in the middle
+    COMPUTE minimum distance on the left
+    
+    IF driving assistance is enabled AND
+        the robot is going against a wall THEN
+        SET robot velocity TO 0
+        PUBLISH robot velocity
+    ENDIF
+
+    IF a goal position is set THEN
+        COMPUTE the time elapsed
+        IF the time elapsed IS GREATER THAN 120 seconds THEN
+            DELETE current goal
+        ENDIF
+    ENDIF
+ENDFUNCTION
+
+FUNCTION currentStatus WITH (msg) 
+    SET current robot position
+    COMPUTE the difference between the current robot position
+    and the current goal position
+    IF the difference IS LESS THAN 0.5 THEN
+        STOP to compute the elapsed time
+    ENDIF
+ENDFUNCTION
+
+FUNCTION currentGoal WITH (msg)
+    SET current goal position
+ENDFUNCTION
+
+FUNCTION userInterface 
+    WHILE user does not quit
+        TAKE user input through the keyboard
+        EXEC corresponding task
+    ENDWHILE
+ENDFUNCTION
+
+FUNCTION main WITH (argc, argv)
+    INITIALIZE the node "final_robot"
+
+    SET the first publisher TO "move_base/goal"
+    SET the second publisher TO "move_base/cancel"
+    SET the third publisher TO "cmd_vel"
+
+    SET the first subscriber TO "/move_base/feedback" WITH currentStatus
+    SET the second subscriber TO "/move_base/goal" WITH currentGoal
+    SET the third subscriber TO "/scan" WITH drivingAssistance
+
+    INITIALIZE spinner WITH 3 threads
+    START spinner
+    CALL userInterface
+    STOP spinner
+    CALL ros::shutdown
+    CALL ros::waitForShutdown
+
+    RETURN 0
+ENDFUNCTION
+<pre><code>
+
 Look the pseudocode file final_robot_pseudocode for more details.<br>
 
 <a name="installation"></a>
