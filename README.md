@@ -189,6 +189,14 @@ In the third one run the node final_robot:
 
 <pre><code>rosrun final_assignment final_robot</code></pre>
 
+Alternatively, you can launch all these nodes using the launch file final_assignment.launch, but first you need to install xterm:
+
+<pre><code>sudo apt install xterm</code></pre>
+
+Now you can type:
+
+<pre><code>roslaunch final_assignment final_assignment.launch</code></pre>
+
 <a name="improve"></a>
 ### Improvements
 
