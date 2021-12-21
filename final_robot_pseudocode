@@ -32,12 +32,14 @@ FUNCTION manualDriving
             Linear velocity advised: 0.5
             Angular velocity advised: 1.0"
     
-    WHILE key IS NOT EQUALS TO 'q'
+    WHILE key IS NOT EQUALS TO 'f'
         IF counter2 % 10 IS EQUALS TO 0 THEN
             PRINT  "Commands:
                     w - Go on
-                    a - Turn left
                     s - Go back
+                    q - Curve left
+                    e - Curve right
+                    a - Turn left
                     d - Turn right
                     -----------------------------
                     z - Increase linear velocity
@@ -45,8 +47,8 @@ FUNCTION manualDriving
                     c - Increase angular velocity
                     v - Decrease angular velocity
                     -----------------------------
-                    e - Emergency stop
-                    q - Quit"
+                    r - Emergency stop
+                    f - Quit"
         ENDIF
 
         IF flag IS EQUALS TO 0 THEN
@@ -63,14 +65,20 @@ FUNCTION manualDriving
         IF key IS EQUALS TO 'w' THEN
             SET robot_vel.linear.x TO lin_vel
             SET robot_vel.angular.z TO 0
-        ELSEIF key IS EQUALS TO 'a' THEN
+        ELSEIF key IS EQUALS TO 'q' THEN
             SET robot_vel.linear.x TO lin_vel
             SET robot_vel.angular.z TO ang_vel
         ELSEIF key IS EQUALS TO 's' THEN
             SET robot_vel.linear.x TO -lin_vel
             SET robot_vel.angular.z TO 0
-        ELSEIF key IS EQUALS TO 'd' THEN
+        ELSEIF key IS EQUALS TO 'e' THEN
             SET robot_vel.linear.x TO lin_vel
+            SET robot_vel.angular.z TO -ang_vel
+        ELSEIF key IS EQUALS TO 'a' THEN
+            SET robot_vel.linear.x TO 0
+            SET robot_vel.angular.z TO ang_vel
+        ELSEIF key IS EQUALS TO 'd' THEN
+            SET robot_vel.linear.x TO 0
             SET robot_vel.angular.z TO -ang_vel
         ELSEIF key IS EQUALS TO 'z' THEN
             SET lin_vel TO lin_vel + 0.1
@@ -80,7 +88,7 @@ FUNCTION manualDriving
             SET ang_vel TO ang_vel + 0.1
         ELSEIF key IS EQUALS TO 'v' THEN
             SET ang_vel TO ang_vel - 0.1
-        ELSEIF key IS EQUALS TO 'e' THEN
+        ELSEIF key IS EQUALS TO 'r' THEN
             SET robot_vel.linear.x TO 0
             SET robot_vel.angular.z TO 0
         ELSEIF key IS EQUALS TO 'h' THEN
@@ -91,7 +99,7 @@ FUNCTION manualDriving
                 SET drive_flag TO 0
                 SET flag TO 0
             ENDIF
-        ELSEIF key IS EQUALS TO 'q' THEN
+        ELSEIF key IS EQUALS TO 'f' THEN
             SET robot_vel.linear.x TO 0
             SET robot_vel.angular.z TO 0
             PUBLISH robot velocity
@@ -117,8 +125,8 @@ FUNCTION drivingAssistance WITH (msg)
     
     IF drive_flag IS EQUALS TO 1 AND
         ((mid IS LESS THAN DIST AND key IS EQUALS TO 'w') OR
-        (left IS LESS THAN DIST AND key IS EQUALS TO 'a') OR
-        (right IS LESS THAN DIST AND key IS EQUALS TO 'd')) THEN
+        (left IS LESS THAN DIST AND key IS EQUALS TO 'q') OR
+        (right IS LESS THAN DIST AND key IS EQUALS TO 'e')) THEN
         IF print_flag IS EQUALS TO 0 THEN
             PRINT "The robot is too close to the wall!"
             SET print_flag TO 1
