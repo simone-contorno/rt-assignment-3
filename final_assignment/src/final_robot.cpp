@@ -70,13 +70,15 @@ void manualDriving() {
     "Linear velocity advised: 0.5\n"
     "Angular velocity advised: 1.0\n");
 
-    while (key != 'q') {
+    while (key != 'f') {
         // Commands list
         if (counter2 % 10 == 0) {
             printf("\nCommands:\n"
             "w - Go on\n"
-            "a - Turn left\n"
             "s - Go back\n"
+            "q - Curve left\n"
+            "e - Curve right\n"
+            "a - Turn left\n"
             "d - Turn right\n"
             "-----------------------------\n"
             "z - Increase linear velocity\n"
@@ -84,8 +86,8 @@ void manualDriving() {
             "c - Increase angular velocity\n"
             "v - Decrease angular velocity\n"
             "-----------------------------\n"
-            "e - Emergency stop\n"
-            "q - Quit\n");
+            "r - Emergency stop\n"
+            "f - Quit\n");
         }
 
         if (flag == 0) 
@@ -103,7 +105,7 @@ void manualDriving() {
             robot_vel.linear.x = lin_vel;
             robot_vel.angular.z = 0; 
         }
-        else if (key == 'a') { // Turn left
+        else if (key == 'q') { // Curve left
             robot_vel.linear.x = lin_vel;
             robot_vel.angular.z = ang_vel; 
         }
@@ -111,8 +113,16 @@ void manualDriving() {
             robot_vel.linear.x = -lin_vel;
             robot_vel.angular.z = 0; 
         }
-        else if (key == 'd') { // Turn right
+        else if (key == 'e') { // Curve right
             robot_vel.linear.x = lin_vel;
+            robot_vel.angular.z = -ang_vel; 
+        }
+        else if (key == 'a') { // Turn left
+            robot_vel.linear.x = 0;
+            robot_vel.angular.z = ang_vel; 
+        }
+        else if (key == 'd') { // Turn right
+            robot_vel.linear.x = 0;
             robot_vel.angular.z = -ang_vel; 
         }
         else if (key == 'z') { // Increase linear velocity
@@ -127,7 +137,7 @@ void manualDriving() {
         else if (key == 'v') { // Decrease angular velocity
             ang_vel -= 0.1;
         }
-        else if (key == 'e') { // Emergency stop
+        else if (key == 'r') { // Emergency stop
             robot_vel.linear.x = 0;
             robot_vel.angular.z = 0; 
         }
@@ -141,7 +151,7 @@ void manualDriving() {
                 flag = 0;
             }
         }
-        else if (key == 'q') { // Quit
+        else if (key == 'f') { // Quit
             robot_vel.linear.x = 0;
             robot_vel.angular.z = 0; 
             pub_vel.publish(robot_vel);
@@ -187,7 +197,7 @@ void drivingAssistance(const sensor_msgs::LaserScan::ConstPtr& msg) {
     }
 
     // Driving assistance
-    if (drive_flag == 1 & ((mid < DIST && key == 'w') || (left < DIST && key == 'a') || (right < DIST && key == 'd'))) {
+    if (drive_flag == 1 & ((mid < DIST && key == 'w') || (left < DIST && key == 'q') || (right < DIST && key == 'e'))) {
         if (print_flag == 0) {
             printf("\nThe robot is too close to the wall!\n");
             print_flag = 1;
