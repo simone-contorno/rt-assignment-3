@@ -1,6 +1,5 @@
-# RT-Assignment-3
-## Third Assignment of Research Track 1 - Robotics Engineering
-### Author: Simone Contorno
+# Third Assignment of Research Track 1 - Robotics Engineering
+## Author: Simone Contorno
 
 <br>
 
@@ -15,7 +14,7 @@ A rapid description of how the program works (pseudo-code).<br>
 [Go to How it works](#how)
 
 ### Installation and Execution
-How install and run RT-Assignment-3 in Linux.<br>
+How install and run this program in Linux.<br>
 [Go to Installation and Execution](#installation)
 
 ### Improvements
@@ -166,7 +165,7 @@ Look the pseudocode file final_robot_pseudocode for more details.<br>
 
 Open the terminal, and download this repository:
 
-<pre><code>git clone https://github.com/simone-contorno/RT-Assignment-3</code></pre>
+<pre><code>git clone https://github.com/simone-contorno/rt-assignment-3</code></pre>
 
 Copy or move the folder final_assignment into the src folder of your ROS workspace.<br> 
 Go into the root folder of your ROS workspace and type: 
